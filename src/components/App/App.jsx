@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { AppBox } from './App.modules';
 import { Searchbar } from '../Searchbar/Searchbar';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
@@ -8,76 +8,57 @@ import { getImages, MAX_PAGE } from 'services/pixabay-api';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export class App extends Component {
-  state = {
-    images: [],
-    textSearch: '',
-    page: 1,
-    isLoading: false,
-    isLoadMore: false,
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [textSearch, setTextSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
 
-  async componentDidUpdate(_, prevState) {
-    const { textSearch } = this.state;
-    const { page } = this.state;
+  useEffect(() => {
+    if (textSearch === '') return;
 
-    if (prevState.textSearch === textSearch && prevState.page === page) return;
+    setIsLoading(true);
 
-    try {
-      this.setState({ isLoading: true });
+    getImages(textSearch, page).then(r => {
+      try {
+        if (r.length === 0) {
+          toast.error('No search images!', { autoClose: 2000 });
+          setTextSearch('');
+          return;
+        }
 
-      const images = await getImages(textSearch, page);
-
-      if (images.length === 0) {
-        toast.error('No search images!', { autoClose: 2000 });
-        return this.setState({
-          isLoadMore: false,
-          images: [],
-        });
+        setImages(prevImg => [...prevImg, ...r]);
+        setIsLoadMore(true);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+        if (MAX_PAGE === page || MAX_PAGE === 0) setIsLoadMore(false);
       }
+    });
+  }, [textSearch, page]);
 
-      if (prevState.textSearch !== textSearch) {
-        this.setState({
-          images,
-          isLoadMore: true,
-        });
-        return page === MAX_PAGE && this.setState({ isLoadMore: false });
-      }
+  const handleSubmitForm = ({ textSearch }) => {
+    setImages([]);
+    setTextSearch(textSearch);
 
-      this.setState({
-        images: [...prevState.images, ...images],
-      });
-      return page === MAX_PAGE && this.setState({ isLoadMore: false });
-    } catch (error) {
-      console.log(error);
-    } finally {
-      this.setState({ isLoading: false });
-    }
-  }
-
-  handleSubmitForm = ({ textSearch }) => {
-    this.setState({ textSearch, page: 1 });
+    setPage(1);
   };
 
-  handleClickLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handleClickLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    return (
-      <AppBox>
-        <Searchbar onSubmit={this.handleSubmitForm} />
-        <ImageGallery images={this.state.images} />
+  return (
+    <AppBox>
+      <Searchbar onSubmit={handleSubmitForm} />
+      <ImageGallery images={images} />
 
-        {this.state.isLoading && (
-          <ProgressBar wrapperStyle={{ margin: '0 auto' }} />
-        )}
+      {isLoading && <ProgressBar wrapperStyle={{ margin: '0 auto' }} />}
 
-        {this.state.isLoadMore && <Button onClick={this.handleClickLoadMore} />}
-        <ToastContainer />
-      </AppBox>
-    );
-  }
-}
+      {isLoadMore && <Button onClick={handleClickLoadMore} />}
+      <ToastContainer />
+    </AppBox>
+  );
+};
