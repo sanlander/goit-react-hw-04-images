@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const URL_API =
-  'https://pixabay.com/api?key=29666264-04a56090f5dead81932f72058&image_type=photo&orientation=horizontal';
+  'https://pixabay.com/api/?key=29666264-04a56090f5dead81932f72058&image_type=photo&orientation=horizontal';
 
 const PER_PAGE = 12;
 export let MAX_PAGE = null;
