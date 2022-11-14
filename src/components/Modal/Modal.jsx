@@ -1,25 +1,27 @@
+import { useEffect } from 'react';
 import { OverlayDiv, ModalDiv } from './Modal.modules';
 
 export const Modal = ({ urlImg, alt, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = e => {
+      e.key === 'Escape' && onClose();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   return (
     <OverlayDiv
       onClick={evt => {
         evt.target.nodeName !== 'IMG' && onClose();
       }}
-      tabIndex={0}
-      onKeyUp={e => {
-        e.key === 'Escape' && onClose();
-      }}
     >
       <ModalDiv>
-        <img
-          tabIndex={0}
-          onKeyDown={e => {
-            e.code === 'Escape' && onClose();
-          }}
-          src={urlImg}
-          alt={alt}
-        />
+        <img src={urlImg} alt={alt} />
       </ModalDiv>
     </OverlayDiv>
   );

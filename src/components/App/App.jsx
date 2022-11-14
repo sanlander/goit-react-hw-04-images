@@ -25,6 +25,7 @@ export const App = () => {
         if (r.length === 0) {
           toast.error('No search images!', { autoClose: 2000 });
           setTextSearch('');
+          setImages([]);
           return;
         }
 
@@ -40,10 +41,12 @@ export const App = () => {
   }, [textSearch, page]);
 
   const handleSubmitForm = ({ textSearch }) => {
-    setImages([]);
+    setTextSearch(prevText => {
+      if (prevText === textSearch && page === 1) return;
+      setImages([]);
+      setPage(1);
+    });
     setTextSearch(textSearch);
-
-    setPage(1);
   };
 
   const handleClickLoadMore = () => {
